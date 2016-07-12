@@ -121,7 +121,7 @@ abstract class BasePdoRepository implements RepositoryInterface
         if ($this->filter) {
             $where = array_merge($where, $this->filter);
         }
-        $sql = sprintf('SELECT * FROM `%s` WHERE true', $this->getTable());
+        $sql = sprintf('SELECT * FROM `%s` WHERE true', $this->getTableName());
         
         if (count($where)>0) {
             $sql .= sprintf(' AND %s', $this->buildKeyValuePairs($where, ' and '));
@@ -215,7 +215,7 @@ abstract class BasePdoRepository implements RepositoryInterface
             // No, use hard-delete
             $statement = $this->pdo->prepare(sprintf(
                 'DELETE FROM `%s` WHERE id=:id',
-                $this->getTable()
+                $this->getTableName()
             ));
             $statement->execute(array('id' => $entity->getId()));
         }
@@ -229,7 +229,7 @@ abstract class BasePdoRepository implements RepositoryInterface
         $this->pdo->exec('SET FOREIGN_KEY_CHECKS=0;');
         $this->pdo->exec(sprintf(
             'TRUNCATE `%s`',
-            $this->getTable()
+            $this->getTableName()
         ));
         $this->pdo->exec('SET FOREIGN_KEY_CHECKS=1;');
     }
@@ -277,7 +277,7 @@ abstract class BasePdoRepository implements RepositoryInterface
     {
         return sprintf(
             'UPDATE `%s` SET %s WHERE %s',
-            $this->getTable(),
+            $this->getTableName(),
             $this->buildKeyValuePairs($fields, ',', false),
             $this->buildKeyValuePairs($where, ' and ', false)
         );
@@ -340,7 +340,7 @@ abstract class BasePdoRepository implements RepositoryInterface
 
         return sprintf(
             'INSERT INTO `%s` (%s) VALUES (%s)',
-            $this->getTable(),
+            $this->getTableName(),
             '`'.implode($fields_names, '`, `').'`',
             ':'.implode($fields_names, ', :')
         );
