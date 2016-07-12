@@ -82,7 +82,15 @@ abstract class BasePdoRepository implements RepositoryInterface
      */
     public function find($id)
     {
-        return $this->findOneBy(array('id' => $id));
+        $rows = $this->fetchRows(array('id' => $id));
+        if (count($rows)==0) {
+            throw new Exception(sprintf(
+                "Entity '%s' with %s not found",
+                $this->getTable(),
+                $this->describeWhereFields($where)
+            ));
+        }
+        return $this->rowToObject($rows[0]);
     }
 
     /**
@@ -90,8 +98,8 @@ abstract class BasePdoRepository implements RepositoryInterface
      */
     public function findOrCreate($id)
     {
-        $entity = $this->findOneOrNullBy(array('id' => $id));
-        if (!$entity) {
+        $rows = $this->fetchRows(array('id' => $id));
+        if (count($rows)==0) {
             $entity = $this->createEntity();
             if ($this->filter) {
                 foreach ($this->filter as $key => $value) {
@@ -102,6 +110,8 @@ abstract class BasePdoRepository implements RepositoryInterface
                     }
                 }
             }
+        } else {
+            $entity = $this->rowToObject($rows[0]);
         }
 
         return $entity;
@@ -116,7 +126,7 @@ abstract class BasePdoRepository implements RepositoryInterface
         return $this->rowsToObjects($rows);
     }
     
-    public function fetchRows($where, $limit = null)
+    protected function fetchRows($where, $limit = null)
     {
         if ($this->filter) {
             $where = array_merge($where, $this->filter);
@@ -386,10 +396,12 @@ abstract class BasePdoRepository implements RepositoryInterface
         
         $result = array();
         foreach ($fields as $key => $value) {
-            $key = trim(str_replace('*', '', $key));
-            $propertyName = Inflector::camelize($key);
-            $getter = sprintf('get%s', ucfirst($propertyName));
-            $result[$key] = $object->$getter($value);
+            if (!strpos($key, '\\')) {
+                $key = trim(str_replace('*', '', $key));
+                $propertyName = Inflector::camelize($key);
+                $getter = sprintf('get%s', ucfirst($propertyName));
+                $result[$key] = $object->$getter($value);
+            }
         }
         
         return $result;
