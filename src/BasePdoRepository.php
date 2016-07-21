@@ -85,9 +85,9 @@ abstract class BasePdoRepository implements RepositoryInterface
         $rows = $this->fetchRows(array('id' => $id));
         if (count($rows)==0) {
             throw new Exception(sprintf(
-                "Entity '%s' with %s not found",
+                "Entity '%s' with id $id not found",
                 $this->getTable(),
-                $this->describeWhereFields($where)
+                $id
             ));
         }
         return $this->rowToObject($rows[0]);
