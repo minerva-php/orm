@@ -365,7 +365,7 @@ abstract class BasePdoRepository implements RepositoryInterface
      *
      * @return string
      */
-    private function describeWhereFields($where)
+    protected function describeWhereFields($where)
     {
         return implode(', ', array_map(function ($v, $k) {
             return sprintf("%s='%s'", $k, $v);
