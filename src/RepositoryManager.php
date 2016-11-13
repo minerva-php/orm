@@ -40,7 +40,7 @@ class RepositoryManager
                 return $repository;
             }
         }
-        throw new RepositoryNotFoundException($className);
+        throw new RepositoryNotFoundException($tableName);
     }
     
     public function autoloadPdoRepositories($path, $ns, $pdo)
