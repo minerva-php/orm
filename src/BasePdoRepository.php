@@ -126,6 +126,25 @@ abstract class BasePdoRepository implements RepositoryInterface
         return $this->rowsToObjects($rows);
     }
 
+    public function findById(array $id)
+    {
+        if (sizeof($id) < 1) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, sizeof($id), '?'));
+
+        $sql = "SELECT *
+                FROM `{$this->getTableName()}`
+                WHERE `id` IN ({$placeholders})
+                ORDER BY `id` DESC;";
+
+        $statement = $this->pdo->prepare($sql);
+        $statement->execute($id);
+
+        return $this->rowsToObjects($statement->fetchAll(PDO::FETCH_ASSOC));
+    }
+
     protected function fetchRows($where, $limit = null)
     {
         if ($this->filter) {
