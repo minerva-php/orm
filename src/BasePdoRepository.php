@@ -150,7 +150,7 @@ abstract class BasePdoRepository implements RepositoryInterface
         if ($this->filter) {
             $where = array_merge($where, $this->filter);
         }
-        $sql = sprintf('SELECT * FROM `%s` WHERE true', $this->getTableName());
+        $sql = sprintf('SELECT * FROM `%s` WHERE 1', $this->getTableName());
 
         if (count($where)>0) {
             $sql .= sprintf(' AND %s', $this->buildKeyValuePairs($where, ' and '));
