@@ -28,13 +28,13 @@ abstract class BasePdoRepository implements RepositoryInterface
         $this->tableName = $tableName;
         $this->pdo = $pdo;
     }
-    
+
     public function createEntity()
     {
         $name = $this->getModelClassName();
         return $name::createNew();
     }
-    
+
     public function getModelClassName()
     {
         if (!$this->modelClassName) {
@@ -42,14 +42,14 @@ abstract class BasePdoRepository implements RepositoryInterface
             // make an educated guess based on the repository class name
             $name = get_class($this);
             $name = str_replace('\\Repository\\', '\\Model\\', $name);
-            
+
             $name = str_replace('\\Pdo', '\\', $name);
             $name = substr($name, 0, -strlen('Repository'));
             $this->modelClassName = $name;
         }
         return $this->modelClassName;
     }
-    
+
     public function setPdo(PDO $pdo)
     {
         $this->pdo = $pdo;
@@ -125,22 +125,41 @@ abstract class BasePdoRepository implements RepositoryInterface
         $rows = $this->fetchRows([]);
         return $this->rowsToObjects($rows);
     }
-    
+
+    public function findById(array $id)
+    {
+        if (sizeof($id) < 1) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, sizeof($id), '?'));
+
+        $sql = "SELECT *
+                FROM `{$this->getTableName()}`
+                WHERE `id` IN ({$placeholders})
+                ORDER BY `id` DESC;";
+
+        $statement = $this->pdo->prepare($sql);
+        $statement->execute($id);
+
+        return $this->rowsToObjects($statement->fetchAll(PDO::FETCH_ASSOC));
+    }
+
     protected function fetchRows($where, $limit = null)
     {
         if ($this->filter) {
             $where = array_merge($where, $this->filter);
         }
-        $sql = sprintf('SELECT * FROM `%s` WHERE true', $this->getTableName());
-        
+        $sql = sprintf('SELECT * FROM `%s` WHERE 1', $this->getTableName());
+
         if (count($where)>0) {
             $sql .= sprintf(' AND %s', $this->buildKeyValuePairs($where, ' and '));
         };
-        
+
         if ($this->getSoftDeleteColumnName()) {
             $sql .= sprintf(' AND %s is null', $this->getSoftDeleteColumnName());
         }
-        
+
         if ($limit>0) {
             $sql .= sprintf(' LIMIT %d', $limit);
         }
@@ -200,7 +219,7 @@ abstract class BasePdoRepository implements RepositoryInterface
             return $value;
         }, $fields);
     }
-    
+
     protected function getSoftDeleteColumnName()
     {
         if (property_exists($this->getModelClassName(), 'deleted_at')) {
@@ -385,15 +404,15 @@ abstract class BasePdoRepository implements RepositoryInterface
 
         return $this;
     }
-    
-    
+
+
     /**
      * {@inheritdoc}
      */
     private function objectToArray($object)
     {
         $fields = (array)$object;
-        
+
         $result = array();
         foreach ($fields as $key => $value) {
             if (!strpos($key, '\\')) {
@@ -403,7 +422,7 @@ abstract class BasePdoRepository implements RepositoryInterface
                 $result[$key] = $object->$getter($value);
             }
         }
-        
+
         return $result;
     }
 
