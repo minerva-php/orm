@@ -130,33 +130,14 @@ abstract class BasePdoRepository implements RepositoryInterface
         return $this->rowsToObjects($rows);
     }
 
-    public function findById(array $id)
-    {
-        if (sizeof($id) < 1) {
-            return [];
-        }
-
-        $placeholders = implode(',', array_fill(0, sizeof($id), '?'));
-
-        $sql = "SELECT *
-                FROM `{$this->getTableName()}`
-                WHERE `id` IN ({$placeholders})
-                ORDER BY `id` DESC;";
-
-        $statement = $this->pdo->prepare($sql);
-        $statement->execute($id);
-
-        return $this->rowsToObjects($statement->fetchAll(PDO::FETCH_ASSOC));
-    }
-
     /**
      * @param array ids
      *
      * @return array
      */
-    public function findByIds(array $ids)
+    public function findByIds($ids)
     {
-        if (sizeof($ids) < 1) {
+        if (!is_array($ids) || sizeof($ids) < 1) {
             return [];
         }
 
@@ -168,10 +149,11 @@ abstract class BasePdoRepository implements RepositoryInterface
 
         $placeholders = implode(',', array_fill(0, sizeof($ids), '?'));
 
-        $sql = "SELECT *
-                FROM `{$this->getTableName()}`
-                WHERE `id` IN ({$placeholders})
-                ORDER BY `id` ASC;";
+        $sql = sprintf(
+                "SELECT * FROM  `%s`
+                    WHERE `id` IN ({$placeholders})
+                    ORDER BY `id` ASC", $this->getTableName()
+            );
 
         $statement = $this->pdo->prepare($sql);
         $statement->execute($ids);
