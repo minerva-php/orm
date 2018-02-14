@@ -32,6 +32,7 @@ abstract class BasePdoRepository implements RepositoryInterface
     public function createEntity()
     {
         $name = $this->getModelClassName();
+
         return $name::createNew();
     }
 
@@ -47,6 +48,7 @@ abstract class BasePdoRepository implements RepositoryInterface
             $name = substr($name, 0, -strlen('Repository'));
             $this->modelClassName = $name;
         }
+
         return $this->modelClassName;
     }
 
@@ -64,7 +66,7 @@ abstract class BasePdoRepository implements RepositoryInterface
                 $res[$key] = $value;
             }
         }
-        if (count($res)>0) {
+        if (count($res) > 0) {
             $this->filter = $res;
         }
     }
@@ -83,13 +85,14 @@ abstract class BasePdoRepository implements RepositoryInterface
     public function find($id)
     {
         $rows = $this->fetchRows(array('id' => $id));
-        if (count($rows)==0) {
+        if (0 == count($rows)) {
             throw new Exception(sprintf(
                 "Entity '%s' with id $id not found",
                 $this->getTable(),
                 $id
             ));
         }
+
         return $this->rowToObject($rows[0]);
     }
 
@@ -99,7 +102,7 @@ abstract class BasePdoRepository implements RepositoryInterface
     public function findOrCreate($id)
     {
         $rows = $this->fetchRows(array('id' => $id));
-        if (count($rows)==0) {
+        if (0 == count($rows)) {
             $entity = $this->createEntity();
             if ($this->filter) {
                 foreach ($this->filter as $key => $value) {
@@ -123,6 +126,7 @@ abstract class BasePdoRepository implements RepositoryInterface
     public function findAll()
     {
         $rows = $this->fetchRows([]);
+
         return $this->rowsToObjects($rows);
     }
 
@@ -152,15 +156,15 @@ abstract class BasePdoRepository implements RepositoryInterface
         }
         $sql = sprintf('SELECT * FROM `%s` WHERE 1', $this->getTableName());
 
-        if (count($where)>0) {
+        if (count($where) > 0) {
             $sql .= sprintf(' AND %s', $this->buildKeyValuePairs($where, ' and '));
-        };
+        }
 
         if ($this->getSoftDeleteColumnName()) {
             $sql .= sprintf(' AND %s is null', $this->getSoftDeleteColumnName());
         }
 
-        if ($limit>0) {
+        if ($limit > 0) {
             $sql .= sprintf(' LIMIT %d', $limit);
         }
 
@@ -168,6 +172,7 @@ abstract class BasePdoRepository implements RepositoryInterface
         $where = $this->flattenValues($where);
         $statement->execute($where);
         $rows = $statement->fetchAll(PDO::FETCH_ASSOC);
+
         return $rows;
     }
 
@@ -225,6 +230,7 @@ abstract class BasePdoRepository implements RepositoryInterface
         if (property_exists($this->getModelClassName(), 'deleted_at')) {
             return 'deleted_at';
         }
+
         return null; // no soft-delete field
     }
 
@@ -272,13 +278,14 @@ abstract class BasePdoRepository implements RepositoryInterface
      */
     protected function rowToObject($row)
     {
-        if ($this->returnDataType == 'array') {
+        if ('array' == $this->returnDataType) {
             return $row;
         }
 
         if ($row) {
             $object = $this->createEntity();
             $this->loadObjectFromArray($object, $row);
+
             return $object;
         }
 
@@ -321,7 +328,7 @@ abstract class BasePdoRepository implements RepositoryInterface
     {
         return implode(array_map(function ($field, $value) use ($isNullPatch) {
             if (is_array($value)) {
-                # Transform [field=>[0=>a,1=>b,2=>c]] to 'field in (:field_0, :field_1, :field_2)'
+                // Transform [field=>[0=>a,1=>b,2=>c]] to 'field in (:field_0, :field_1, :field_2)'
                 return sprintf('`%s` in (%s)', $field, implode(array_map(function ($index) use ($field) {
                     return sprintf(':%s_%s', $field, $index);
                 }, array_keys($value)), ', '));
@@ -347,7 +354,7 @@ abstract class BasePdoRepository implements RepositoryInterface
             }
 
             if (is_array($value)) {
-                # Transform [field=>[0=>a,1=>b,2=>c]] to [field_0=>a, field_1=>b, field_2=>c)
+                // Transform [field=>[0=>a,1=>b,2=>c]] to [field_0=>a, field_1=>b, field_2=>c)
                 foreach ($value as $index => $index_value) {
                     $index_key = sprintf('%s_%s', $field, $index);
                     $result[$index_key] = $index_value;
@@ -405,19 +412,19 @@ abstract class BasePdoRepository implements RepositoryInterface
         return $this;
     }
 
-
     /**
      * {@inheritdoc}
      */
     private function objectToArray($object)
     {
-        $fields = (array)$object;
+        $fields = (array) $object;
 
         $result = array();
         foreach ($fields as $key => $value) {
             if (!strpos($key, '\\')) {
                 $key = trim(str_replace('*', '', $key));
                 $propertyName = Inflector::camelize($key);
+                $key = Inflector::tableize($key); // resolve field  casing issue//
                 $getter = sprintf('get%s', ucfirst($propertyName));
                 $result[$key] = $object->$getter($value);
             }
