@@ -329,9 +329,9 @@ abstract class BasePdoRepository implements RepositoryInterface
         return implode($delimiter, array_map(function ($field, $value) use ($isNullPatch) {
             if (is_array($value)) {
                 // Transform [field=>[0=>a,1=>b,2=>c]] to 'field in (:field_0, :field_1, :field_2)'
-                return sprintf('`%s` in (%s)', $field, implode(array_map(function ($index) use ($field) {
+                return sprintf('`%s` in (%s)', $field, implode(', ', array_map(function ($index) use ($field) {
                     return sprintf(':%s_%s', $field, $index);
-                }, array_keys($value)), ', '));
+                }, array_keys($value)));
             }
 
             // return sprintf('`%s`=:%s', $field, $field);
@@ -377,8 +377,8 @@ abstract class BasePdoRepository implements RepositoryInterface
         return sprintf(
             'INSERT INTO `%s` (%s) VALUES (%s)',
             $this->getTableName(),
-            '`'.implode($fields_names, '`, `').'`',
-            ':'.implode($fields_names, ', :')
+            '`'.implode('`, `', $fields_names).'`',
+            ':'.implode(', :', $fields_names)
         );
     }
 
