@@ -326,7 +326,7 @@ abstract class BasePdoRepository implements RepositoryInterface
      */
     protected function buildKeyValuePairs($where, $delimiter, $isNullPatch = true)
     {
-        return implode(array_map(function ($field, $value) use ($isNullPatch) {
+        return implode($delimiter, array_map(function ($field, $value) use ($isNullPatch) {
             if (is_array($value)) {
                 // Transform [field=>[0=>a,1=>b,2=>c]] to 'field in (:field_0, :field_1, :field_2)'
                 return sprintf('`%s` in (%s)', $field, implode(array_map(function ($index) use ($field) {
@@ -341,7 +341,7 @@ abstract class BasePdoRepository implements RepositoryInterface
             } else {
                 return sprintf('`%s`=:%s', $field, $field);
             }
-        }, array_keys($where), $where), $delimiter);
+        }, array_keys($where), $where));
     }
 
     protected function flattenValues($fields)
